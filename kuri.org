@@ -1,0 +1,941 @@
+#+PROPERTY: header-args:cpp :results output code :exports both :dir ./src/
+#+PROPERTY: header-args:shell :results output code :exports both
+
+* Ranting intro and some random notes
+How many Tamil words we know in total and how many do we use in day to day life? We may know close to 5000 words and use perhaps 500 to 700 words every day.
+
+Like lego pieces the large the pieces the lesser the number ways you can connect them. The finer the pieces are the more ways we connect them and give rise to novel products. Like drawing with pencil with a finer tip, lets us say more and draw more on given space.
+
+What is there is a language? Nouns and Verbs
+Anything that exists can be named and any process/event can be described.
+
+Computer is a machine that needs to know how much space to allocate (and what kind operation are possible over that) and that is why we need datatypes. Computer can do any operation on any memory, but we want to restrict it. In nature not all operations are applicable on all things. It is pointless to burn a flower, eat plastic. Nothings stops us from doing all that, but what is the point? So who imposes such restrictions, computer or the compiler?
+
+Polymorphism: Add two thousand to my account is different from add two windows to the home.
+
+* Turing Demo
+#+begin_src asm
+data cell0=50, cell1=9, cell2=5, cell3=32, cell4=0, cell5=0, head=0
+
+state MOVE_TO_PROD:
+  move 4
+  write ( read(-4) * read(-3) ), 0
+  write ( read(0) // read(-2) ), 0
+  move 1
+  goto ADD
+  write ( read(-1) + read(-2) ), 0
+  halt
+#+end_src
+
+#+begin_src asm
+data cell0=50, cell1=9, cell2=5, cell3=32, cell4=0, cell5=0, head=0
+
+state MOVE_TO_PROD:
+  move 4
+  goto MULT
+
+state MULT:
+  # At cell4:
+  #   read(-4) → cell0 (Celsius)
+  #   read(-3) → cell1 (factor 9)
+  write ( read(-4) * read(-3) ), 0
+  goto DIV
+
+state DIV:
+  # At cell4 (holding product):
+  #   read(-2) → cell2 (divisor 5)
+  write ( read(0) // read(-2) ), 0
+  goto MOVE_FOR_ADD
+
+state MOVE_FOR_ADD:
+  move 1  # Move head from cell4 to cell5.
+  goto ADD
+
+state ADD:
+  # At cell5:
+  #   read(-1) → cell4 (quotient from division)
+  #   read(-2) → cell3 (offset constant 32)
+  write ( read(-1) + read(-2) ), 0
+  halt
+#+end_src
+
+* The Plan
+First let me explain the workflow. I am going to use Emacs. But the techniques should carry over to any IDE.
+- Code Blocks IDE
+
+
+To compile the program run the following command
+#+begin_src shell
+  g++ program.cpp -o program
+#+end_src
+
+* Commands, Programs and Function
+:PROPERTIES:
+:header-args: :results output code :exports btoh
+:END:
+
+#+begin_src shell
+  ls
+#+end_src
+
+#+RESULTS:
+#+begin_src shell
+advanced.org
+basics.org
+bin
+emacs-config.el
+input.txt
+kolam
+kolam.cpp
+kolam.ppm
+kuri.org
+output.txt
+pointers-analogy.org
+programs.org
+quiz-and-worksheets
+src
+tm
+variables.cpp
+#+end_src
+
+Each command is a program very much like that one we write and compile here in this workshop. Commands usually have a well defined purpose. They do one thing and one well.
+
+Commands can call upon each other to perform more complex tasks. i.e programs can call upon each other to accomplish more complex work, that what a single program can do. This is reflected within the code of single program too. Only the programs inside the programs are called functions. Actually all programs are just function in compiled form. That is where we begin with out ~main~ function
+
+#+name: do-nothing
+#+begin_src cpp :tangle ./src/do-nothing.cpp
+  int main() {}
+#+end_src
+
+#+RESULTS: do-nothing
+#+begin_src sh
+#+end_src
+
+
+#+name: do-something
+#+begin_src cpp :tangle ./src/do-something.cpp
+  #include <iostream>
+  int main() {
+    std::cout << "do-something";
+  }
+#+end_src
+
+#+RESULTS: do-something
+#+begin_src sh
+do-something
+#+end_src
+
+When you run this function in the shell or terminal, the operating system will load this program in the RAM memory and start execution by calling the ~main()~ function.
+
+#+name:main-args
+#+begin_src cpp :tangle ./src/main-args.cpp
+  #include <iostream>
+  int main(int argc, char *argv[]){
+    std::cout << argc << " " << argv[1];
+  }
+#+end_src
+
+#+RESULTS: main-args
+#+begin_src sh
+2 something
+#+end_src
+
+We will discuss what functions are and what is these argc and argv are when we discuss functions
+
+* Input and output
+There are handful of ways a program can take in and spit out data. Most important of them are standard input and standard output. There is one more thing standard error. We will deal with talk about that later. Lets first see how a program can output something.
+
+Our programs are usually run from within a shell/terminal (shell and terminal are not the same thing, but for our purposes it does not matter).
+
+** Standard Output
+When you run a program in terminal the program writes the data onto the terminal. This channel of communication is called standard output.
+
+#+name:  hello-world
+#+begin_src cpp :tangle ./src/hello-world.cpp :results output code
+  #include <iostream>
+  using namespace std;
+  int main() {
+    cout << "வணக்கம் மக்களே!" << endl;
+  }
+#+end_src
+
+#+RESULTS: hello-world
+#+begin_src sh
+வணக்கம் மக்களே!
+#+end_src
+
+** CLI arguments
+How can the program can be fed? The program can read data from the standard input. But the command line arguments is one of the most useful ways of feeding the program.
+#+name: io-argv
+#+begin_src cpp  :tangle ./src/io-argv.cpp
+  #include <iostream>
+  using namespace std;
+  int main(int argc, char* argv[]) {
+    cout << "வணக்கம்" << " " << argv[1] << endl;
+  }
+#+end_src
+
+#+RESULTS: io-argv
+#+begin_src sh
+வணக்கம்
+#+end_src
+
+What is that =argc= and =argv=? We will talk about that in detail when we discuss functions, but lets just print their values.
+#+name: io-argc
+#+begin_src cpp :tangle ./src/io-argc.cpp
+  #include <iostream>
+  using namespace std;
+  int main(int argc, char* argv[]) {
+    cout << argc << " " << argv[1] << endl;
+  }
+#+end_src
+
+#+RESULTS: io-argc
+#+begin_src sh
+2 chumma
+#+end_src
+
+** Standard input
+The program can be fed from the shell/terminal using standard input.
+#+name: io-stdin
+#+begin_src cpp :tangle ./src/io-stdin.cpp
+  #include <iostream>
+  using namespace std;
+  int main() {
+    int a, b;
+    cin >> a >> b ;
+    cout << a+b << endl;
+  }
+#+end_src
+
+** File I/O
+The data can be also read from files.
+#+name: io-file-reading-whole
+#+begin_src cpp :tangle ./src/io-file-reading-whole.cpp
+  #include <iostream>
+  #include <fstream>
+  using namespace std;
+
+  int main() {
+      ifstream in("input.txt");
+      if (!in) {
+          cerr << "Error: cannot open file\n";
+          return 1;
+      }
+
+      cout << in.rdbuf();
+      return 0;
+  }
+#+end_src
+
+Notice that ~cerr~ in the above code. This is the standard error which also written to the terminal screen, just like standard output ~cout~. What is the difference then?
+
+Similarly the data can be written to files. For now ignore the statements like ~string~, ~while~ and ~getline~ and others. Just compile, run the program and observe.
+
+#+name: io-file-writing
+#+begin_src cpp :tangle ./src/io-file-writing.cpp
+  #include <iostream>
+  #include <fstream>
+  #include <string>
+  using namespace std;
+
+  int main() {
+      ofstream out("output.txt");  // open for writing (overwrite mode)
+      if (!out) {
+          cerr << "Error: Cannot open file for writing.\n";
+          return 1;
+      }
+
+      cout << "Enter text (type END to finish):\n";
+      string line;
+      while (true) {
+          getline(cin, line);
+          if (line == "END") break;
+          out << line << '\n';
+      }
+
+      out.close();
+      cout << "File saved as output.txt\n";
+      return 0;
+  }
+#+end_src
+
+I could have just read one single line and written to the output file like this
+#+name: io-file-writing-simple
+#+begin_src cpp :tangle ./src/io-file-writing-simple.cpp
+  #include <iostream>
+  #include <fstream>
+  #include <string>
+  using namespace std;
+
+  int main() {
+      ofstream out("output.txt");  // open for writing (overwrite mode)
+      if (!out) {
+          cerr << "Error: Cannot open file for writing.\n";
+          return 1;
+      }
+
+      string buffer;
+      getline(cin, buffer);
+      out << buffer << endl;
+
+      out.close();
+      cout << "File saved as output.txt\n";
+      return 0;
+  }
+#+end_src
+
+Why are we using ~getline~ and passing it ~cin~?
+
+#+begin_src cpp  :eval no
+  char buffer[100];
+  cin >> buffer;
+#+end_src
+
+#+begin_src cpp  :eval no
+  string buffer;
+  getline(cin, buffer);
+#+end_src
+
+* Variables
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+  int main() {
+    string message = ""
+  }
+#+end_src
+
+#+name: variables
+#+begin_src cpp :tangle ./src/variables.cpp
+  #include <iostream>
+
+  int main() {
+      int age = 17;
+      double height = 165.5;
+      char grade = 'A';
+      bool isStudent = true;
+
+      std::cout << "Age: " << age << "\n";
+      std::cout << "Height: " << height << " cm\n";
+      std::cout << "Grade: " << grade << "\n";
+      std::cout << "Is a student? " << isStudent << "\n";
+
+      age = 18;
+      std::cout << "After birthday, age: " << age << "\n";
+
+      return 0;
+  }
+#+end_src
+
+#+RESULTS: variables
+#+begin_src sh
+Age: 17
+Height: 165.5 cm
+Grade: A
+Is a student? 1
+After birthday, age: 18
+#+end_src
+
+* Control Flow
+** Repeating
+*** Reading a file line by line
+#+name: reading-file-line-by-line
+#+begin_src cpp :tangle ./src/reading-file-line-by-line.cpp
+  #include <iostream>
+  #include <fstream>
+  #include <string>
+  using namespace std;
+
+  int main(int argc, char* argv[]) {
+      if (argc != 2) {
+          cerr << "Usage: " << argv[0] << " <text-file>\n";
+          return 1;
+      }
+
+      ifstream in(argv[1]);  // text mode by default
+      if (!in) {
+          cerr << "Error: Cannot open file: " << argv[1] << "\n";
+          return 1;
+      }
+
+      string line;
+      while (getline(in, line)) {
+          cout << line << '\n';  // preserve lines
+      }
+
+      return 0;
+  }
+
+#+end_src
+*** Counting up with ~while~ loop
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      int i = 1;    // start
+      while (i <= 5) {
+          cout << i << " ";
+          i++;      // move towards stopping condition
+      }
+  }
+
+#+end_src
+*** Summing N numbers
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      int num = 0;
+      int sum = 0;
+
+      cout << "Enter numbers (0 to stop): ";
+      while (num != 0) {
+          cin >> num;
+          sum += num;
+      }
+
+      cout << "Sum = " << sum << endl;
+  }
+#+end_src
+*** ~do-while~ loop
+#+begin_src cpp :tangle ./src/do-while.cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      int x;
+
+      do {
+          cout << "Enter positive number: ";
+          cin >> x;
+      } while (x > 0);
+
+      cout << "You entered: " << x << endl;
+  }
+#+end_src
+*** ~for~ loop
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      for (int i = 1; i <= 5; i++) {
+          cout << i << " squared = " << i * i << endl;
+      }
+  }
+#+end_src
+*** Nested loops
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      for (int r = 1; r <= 5; r++) {
+          for (int c = 1; c <= 5; c++) {
+              cout << r * c << "\t";
+          }
+          cout << endl;
+      }
+  }
+#+end_src
+*** Breaking and Skipping
+Breaking allows us to break out of the loop.
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      for (int i = 1; ; i++) {
+          if (i > 10) break; // break stops loop
+          cout << i << " ";
+      }
+  }
+#+end_src
+
+Continue allows us to skip certain iterations
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      for (int i = 1; i <= 10; i++) {
+          if (i % 2 == 0) continue; // skip even numbers
+          cout << i << " ";
+      }
+  }
+#+end_src
+*** Conditions in the loop can be complex expressions
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      int i = 1;
+      while ((i *= 2) <= 50) {
+          cout << i << " ";
+      }
+  }
+#+end_src
+*** Be ware of infinite loops
+WARNING: can go on forever eating up and heating up CPU
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      while (true) {
+          cout << "Press Ctrl+C to stop\n";
+      }
+  }
+#+end_src
+
+** Branching
+*** Simple if else branching
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      int n;
+      cout << "Enter a number: ";
+      cin >> n;
+
+      if (n > 0) {
+          cout << "Positive number\n";
+      }
+  }
+#+end_src
+*** if else..
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      int n;
+      cin >> n;
+
+      if (n % 2 == 0)
+          cout << "Even\n";
+      else
+          cout << "Odd\n";
+  }
+#+end_src
+*** if else ladder
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      int m;
+      cout << "Marks: ";
+      cin >> m;
+
+      if (m >= 90)
+          cout << "Grade A\n";
+      else if (m >= 75)
+          cout << "Grade B\n";
+      else if (m >= 60)
+          cout << "Grade C\n";
+      else
+          cout << "Fail\n";
+  }
+#+end_src
+*** Nested conditionals
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      int a, b, c;
+      cin >> a >> b >> c;
+
+      if (a > b) {
+          if (a > c)
+              cout << "A is greatest\n";
+          else
+              cout << "C is greatest\n";
+      } else {
+          if (b > c)
+              cout << "B is greatest\n";
+          else
+              cout << "C is greatest\n";
+      }
+  }
+#+end_src
+
+*** Ternary operator
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      int age;
+      cin >> age;
+
+      string msg = (age >= 18) ? "Adult" : "Minor";
+      cout << msg << endl;
+  }
+#+end_src
+*** Switch case
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      char g;
+      cout << "Enter grade (A/B/C): ";
+      cin >> g;
+
+      switch (g) {
+          case 'A': cout << "Excellent\n"; break;
+          case 'B': cout << "Good\n"; break;
+          case 'C': cout << "Average\n"; break;
+          default : cout << "Invalid grade\n";
+      }
+  }
+#+end_src
+
+#+begin_src cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    char ch;
+    cin >> ch;
+
+    switch (ch) {
+        case 'a': case 'e': case 'i': case 'o': case 'u':
+        case 'A': case 'E': case 'I': case 'O': case 'U':
+            cout << "Vowel\n";
+            break;
+        default:
+            cout << "Consonant or Symbol\n";
+    }
+}
+#+end_src
+
+#+begin_src cpp
+  #include <iostream>
+  using namespace std;
+
+  int main() {
+      int y;
+      cin >> y;
+
+      bool leap = (y % 400 == 0) || (y % 4 == 0 && y % 100 != 0);
+      switch (leap) {
+          case true: cout << "Leap year\n"; break;
+          case false: cout << "Not a leap year\n"; break;
+      }
+  }
+#+end_src
+* Functions
+#+name: functions-add-1.cpp
+#+begin_src cpp :tangle ./src/functions-add-1.cpp
+  #include <iostream>
+  using namespace std;
+
+  int add(int x, int y) {
+    return x+y;
+  }
+
+  int main() {
+    int a, b;
+    cout << "Enter two numbers: ";
+    cin >> a >> b;
+    cout << add(a,b) << endl;
+  }
+#+end_src
+* Temperature conversion
+#+begin_src cpp
+  #include <iostream>
+  #include <limits>
+
+  double to_celsius(double f){ return (f - 32.0) * 5.0/9.0; }
+  double to_fahrenheit(double c){ return c * 9.0/5.0 + 32.0; }
+  double cm_to_in(double cm){ return cm / 2.54; }
+  double in_to_cm(double in){ return in * 2.54; }
+
+  int main() {
+      std::cout << "Unit Converter (C++17)\n";
+      while(true){
+          std::cout << "\n1) C -> F  2) F -> C  3) cm -> in  4) in -> cm  0) quit\nChoice: ";
+          int ch; if(!(std::cin>>ch)) return 0;
+          if(ch==0) break;
+          double x;
+          switch(ch){
+              case 1: std::cout<<"Celsius: "; std::cin>>x; std::cout<<"F: "<<to_fahrenheit(x)<<"\n"; break;
+              case 2: std::cout<<"Fahrenheit: "; std::cin>>x; std::cout<<"C: "<<to_celsius(x)<<"\n"; break;
+              case 3: std::cout<<"cm: "; std::cin>>x; std::cout<<"in: "<<cm_to_in(x)<<"\n"; break;
+              case 4: std::cout<<"in: "; std::cin>>x; std::cout<<"cm: "<<in_to_cm(x)<<"\n"; break;
+              default: std::cout<<"Invalid.\n"; break;
+          }
+          std::cin.clear(); std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+      }
+  }
+#+end_src
+* Structures
+#+begin_src cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Student {
+    string name;
+    int    age;
+    double avg;
+};
+
+int main() {
+    Student s{"Anita", 16, 88.5};        // aggregate init
+    cout << s.name << " " << s.age << " " << s.avg << "\n";
+}
+#+end_src
+
+#+begin_src cpp
+
+  struct Point {
+      int x{0};
+      int y{0};
+  };
+
+  int main(){
+      Point p1;           // {0,0}
+      Point p2{5};        // {5,0}
+      Point p3{5,7};      // {5,7}
+      cout << p1.x<<","<<p1.y<<" "
+           << p2.x<<","<<p2.y<<" "
+           << p3.x<<","<<p3.y<<"\n";
+  }
+#+end_src
+
+Nested structures
+#+begin_src cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Date { int d{}, m{}, y{}; };
+struct Student { string name; Date dob; };
+
+int main(){
+    Student s{"Vikram", {2, 10, 2008}};
+    cout << s.name << " " << s.dob.d << "-" << s.dob.m << "-" << s.dob.y << "\n";
+}
+#+end_src
+
+* File I/O
+#+begin_src cpp
+  #include <iostream>
+  #include <fstream>
+  using namespace std;
+
+  int main() {
+      ofstream fout("output.txt"); // creates & opens file
+
+      if (!fout) {
+          cout << "Error opening file!\n";
+          return 1;
+      }
+
+      fout << "Hello, File I/O!\n";
+      fout << "Writing text file from C++.\n";
+
+      cout << "File written successfully.\n";
+  }
+#+end_src
+
+#+begin_src cpp
+#include <iostream>
+#include <fstream>
+#include <string>
+using namespace std;
+
+int main() {
+    ifstream fin("output.txt");
+    if (!fin) {
+        cout << "File not found!\n";
+        return 1;
+    }
+
+    string line;
+    while (getline(fin, line)) {
+        cout << line << endl;
+    }
+}
+#+end_src
+
+What if we want to add to the file
+#+begin_src cpp
+  #include <iostream>
+  #include <fstream>
+  using namespace std;
+
+  int main() {
+      ofstream fout("output.txt", ios::app); // append mode
+
+      if (!fout) {
+          cout << "Cannot open file!\n";
+          return 1;
+      }
+
+      fout << "This is appended content.\n";
+      cout << "Append successful.\n";
+  }
+#+end_src
+
+Binary files
+#+begin_src cpp
+  #include <iostream>
+  #include <fstream>
+  using namespace std;
+
+  struct Student {
+      char name[20];
+      int age;
+      float marks;
+  };
+
+  int main() {
+      Student s = {"Rahul", 17, 91.5f};
+
+      ofstream fout("student.dat", ios::binary);
+      if (!fout) {
+          cout << "Cannot open file!\n";
+          return 1;
+      }
+
+      fout.write(reinterpret_cast<char*>(&s), sizeof(s));
+
+      cout << "Binary data stored.\n";
+  }
+#+end_src
+
+Reading the binary file
+#+begin_src cpp
+  #include <iostream>
+  #include <fstream>
+  using namespace std;
+
+  struct Student {
+      char name[20];
+      int age;
+      float marks;
+  };
+
+  int main() {
+      Student s;
+
+      ifstream fin("student.dat", ios::binary);
+      if (!fin) {
+          cout << "File error!\n";
+          return 1;
+      }
+
+      fin.read(reinterpret_cast<char*>(&s), sizeof(s));
+
+      cout << "Name: " << s.name << endl;
+      cout << "Age: "  << s.age  << endl;
+      cout << "Marks: " << s.marks << endl;
+  }
+
+#+end_src
+
+Appending binary records
+#+begin_src cpp
+  #include <iostream>
+  #include <fstream>
+  using namespace std;
+
+  struct Student {
+      char name[20];
+      int age;
+      float marks;
+  };
+
+  int main() {
+      Student s;
+      cout << "Enter name age marks: ";
+      cin >> s.name >> s.age >> s.marks;
+
+      ofstream fout("student.dat", ios::binary | ios::app);
+      if (!fout) {
+          cout << "Cannot open file!\n";
+          return 1;
+      }
+
+      fout.write(reinterpret_cast<char*>(&s), sizeof(s));
+      cout << "Record appended.\n";
+  }
+
+#+end_src
+
+Reading multiple binary records
+#+begin_src cpp
+  #include <iostream>
+  #include <fstream>
+  using namespace std;
+
+  struct Student {
+      char name[20];
+      int age;
+      float marks;
+  };
+
+  int main() {
+      Student s;
+      ifstream fin("student.dat", ios::binary);
+
+      if (!fin) {
+          cout << "File missing.\n";
+          return 1;
+      }
+
+      while (fin.read(reinterpret_cast<char*>(&s), sizeof(s))) {
+          cout << s.name << "  " << s.age
+               << "  " << s.marks << endl;
+      }
+  }
+
+#+end_src
+* Core stats
+#+begin_src cpp
+  #include <iostream>
+  #include <vector>
+  #include "stats.h"
+
+  #include <algorithm>
+  #include <numeric>
+  #include <stdexcept>
+
+  double mean(const std::vector<int>& a){
+    if(a.empty()) throw std::runtime_error("mean of empty");
+    return std::accumulate(a.begin(), a.end(), 0.0) / a.size();
+  }
+  double median(std::vector<int> a){
+    if(a.empty()) throw std::runtime_error("median of empty");
+    std::sort(a.begin(), a.end());
+    size_t n=a.size();
+    return (n%2)? a[n/2] : (a[n/2-1]+a[n/2])/2.0;
+  }
+  int minv(const std::vector<int>& a){
+    if(a.empty()) throw std::runtime_error("min of empty");
+    return *std::min_element(a.begin(), a.end());
+  }
+  int maxv(const std::vector<int>& a){
+    if(a.empty()) throw std::runtime_error("max of empty");
+    return *std::max_element(a.begin(), a.end());
+  }
+
+  int main(){
+    std::cout<<"Enter scores (0..100), -1 to stop:\n";
+    std::vector<int> a;
+    while(true){ int x; if(!(std::cin>>x)) return 0; if(x==-1) break; if(0<=x && x<=100) a.push_back(x); }
+    if(a.empty()){ std::cout<<"No data.\n"; return 0; }
+    std::cout<<"Count: "<<a.size()<<"\n";
+    std::cout<<"Min: "<<minv(a)<<" Max: "<<maxv(a)<<"\n";
+    std::cout<<"Mean: "<<mean(a)<<" Median: "<<median(a)<<"\n";
+  }
+
+#+end_src
